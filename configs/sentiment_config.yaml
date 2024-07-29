@@ -1,0 +1,11 @@
+data_samples: 10000
+max_epochs: 10
+gpus_per_trial: 1
+num_samples: 5
+
+hyperparameters:
+  lr:
+    min: 0.00001
+    max: 0.001
+  epochs:
+    values: [2, 3, 4]

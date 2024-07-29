@@ -1,0 +1,23 @@
+data_samples: 100000
+max_epochs: 50
+gpus_per_trial: 0
+num_samples: 10
+
+hyperparameters:
+  units_1:
+    values: [32, 64, 128]
+  units_2:
+    values: [16, 32, 64]
+  dropout_1:
+    min: 0.1
+    max: 0.5
+  dropout_2:
+    min: 0.1
+    max: 0.5
+  lr:
+    min: 0.0001
+    max: 0.01
+  batch_size:
+    values: [32, 64, 128]
+  epochs:
+    values: [10, 20, 30]

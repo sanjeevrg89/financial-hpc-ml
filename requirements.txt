@@ -1,0 +1,8 @@
+ray[tune]
+pandas
+scikit-learn
+numpy
+tensorflow
+torch
+transformers
+pyyaml

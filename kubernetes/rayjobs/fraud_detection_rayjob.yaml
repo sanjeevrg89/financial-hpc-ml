@@ -1,0 +1,86 @@
+apiVersion: ray.io/v1
+kind: RayJob
+metadata:
+  name: fraud-detection-training
+  namespace: fraud-detection
+spec:
+  entrypoint: |
+    python3 -c "from src.data_generation.fraud_data_generator import generate_fraud_data; generate_fraud_data().to_csv('/tmp/fraud_data.csv', index=False)"
+    python3 scripts/run_fraud_detection.py
+  runtimeEnv:
+    pip: ["ray[tune]", "pandas", "scikit-learn", "numpy", "pyyaml"]
+  rayClusterSpec:
+    rayVersion: '2.4.0'
+    headGroupSpec:
+      serviceType: ClusterIP
+      replicas: 1
+      rayStartParams:
+        dashboard-host: '0.0.0.0'
+      template:
+        metadata:
+          labels:
+            kueue.x-k8s.io/queue-name: fraud-detection-queue
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: node.kubernetes.io/instance-type
+                    operator: In
+                    values:
+                    - g5.xlarge
+                  - key: karpenter.sh/capacity-type
+                    operator: In
+                    values:
+                    - on-demand
+                    - spot
+          containers:
+          - name: ray-head
+            image: your-registry/financial-hpc-ml:latest
+            resources:
+              limits:
+                cpu: 4
+                memory: 16Gi
+                nvidia.com/gpu: 1
+              requests:
+                cpu: 4
+                memory: 16Gi
+                nvidia.com/gpu: 1
+    workerGroupSpecs:
+    - replicas: 2
+      minReplicas: 1
+      maxReplicas: 5
+      groupName: worker-group-1
+      rayStartParams: {}
+      template:
+        metadata:
+          labels:
+            kueue.x-k8s.io/queue-name: fraud-detection-queue
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: node.kubernetes.io/instance-type
+                    operator: In
+                    values:
+                    - g5.xlarge
+                  - key: karpenter.sh/capacity-type
+                    operator: In
+                    values:
+                    - on-demand
+                    - spot
+          containers:
+          - name: ray-worker
+            image: your-registry/financial-hpc-ml:latest
+            resources:
+              limits:
+                cpu: 4
+                memory: 16Gi
+                nvidia.com/gpu: 1
+              requests:
+                cpu: 4
+                memory: 16Gi
+                nvidia.com/gpu: 1

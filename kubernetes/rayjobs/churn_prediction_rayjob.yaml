@@ -1,0 +1,82 @@
+apiVersion: ray.io/v1
+kind: RayJob
+metadata:
+  name: churn-prediction-training
+  namespace: churn-prediction
+spec:
+  entrypoint: |
+    python3 -c "from src.data_generation.churn_data_generator import generate_churn_data; generate_churn_data().to_csv('/tmp/churn_data.csv', index=False)"
+    python3 scripts/run_churn_prediction.py
+  runtimeEnv:
+    pip: ["ray[tune]", "pandas", "scikit-learn", "numpy", "pyyaml", "tensorflow"]
+  rayClusterSpec:
+    rayVersion: '2.4.0'
+    headGroupSpec:
+      serviceType: ClusterIP
+      replicas: 1
+      rayStartParams:
+        dashboard-host: '0.0.0.0'
+      template:
+        metadata:
+          labels:
+            kueue.x-k8s.io/queue-name: churn-prediction-queue
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: node.kubernetes.io/instance-type
+                    operator: In
+                    values:
+                    - c5.2xlarge
+                  - key: karpenter.sh/capacity-type
+                    operator: In
+                    values:
+                    - on-demand
+                    - spot
+          containers:
+          - name: ray-head
+            image: your-registry/financial-hpc-ml:latest
+            resources:
+              limits:
+                cpu: 8
+                memory: 16Gi
+              requests:
+                cpu: 8
+                memory: 16Gi
+    workerGroupSpecs:
+    - replicas: 2
+      minReplicas: 1
+      maxReplicas: 5
+      groupName: worker-group-1
+      rayStartParams: {}
+      template:
+        metadata:
+          labels:
+            kueue.x-k8s.io/queue-name: churn-prediction-queue
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: node.kubernetes.io/instance-type
+                    operator: In
+                    values:
+                    - c5.2xlarge
+                  - key: karpenter.sh/capacity-type
+                    operator: In
+                    values:
+                    - on-demand
+                    - spot
+          containers:
+          - name: ray-worker
+            image: your-registry/financial-hpc-ml:latest
+            resources:
+              limits:
+                cpu: 8
+                memory: 16Gi
+              requests:
+                cpu: 8
+                memory: 16Gi

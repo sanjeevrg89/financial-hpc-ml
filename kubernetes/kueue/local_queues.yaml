@@ -1,0 +1,23 @@
+apiVersion: kueue.x-k8s.io/v1beta1
+kind: LocalQueue
+metadata:
+  name: fraud-detection-queue
+  namespace: fraud-detection
+spec:
+  clusterQueue: financial-ml-queue
+---
+apiVersion: kueue.x-k8s.io/v1beta1
+kind: LocalQueue
+metadata:
+  name: churn-prediction-queue
+  namespace: churn-prediction
+spec:
+  clusterQueue: financial-ml-queue
+---
+apiVersion: kueue.x-k8s.io/v1beta1
+kind: LocalQueue
+metadata:
+  name: sentiment-analysis-queue
+  namespace: sentiment-analysis
+spec:
+  clusterQueue: financial-ml-queue

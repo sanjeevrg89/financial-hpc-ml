@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: fraud-detection
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: churn-prediction
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sentiment-analysis

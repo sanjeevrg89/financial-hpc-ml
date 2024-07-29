@@ -1,0 +1,40 @@
+apiVersion: kueue.x-k8s.io/v1beta1
+kind: ClusterQueue
+metadata:
+  name: financial-ml-queue
+spec:
+  namespaceSelector: {}
+  resourceGroups:
+  - coveredResources: ["cpu", "memory"]
+    flavors:
+    - name: g5
+      resources:
+      - name: cpu
+        nominalQuota: 40
+      - name: memory
+        nominalQuota: 160Gi
+    - name: c5
+      resources:
+      - name: cpu
+        nominalQuota: 80
+      - name: memory
+        nominalQuota: 160Gi
+    - name: m5
+      resources:
+      - name: cpu
+        nominalQuota: 80
+      - name: memory
+        nominalQuota: 320Gi
+  - coveredResources: ["nvidia.com/gpu"]
+    flavors:
+    - name: g5
+      resources:
+      - name: nvidia.com/gpu
+        nominalQuota: 10
+  cohort:
+    minQuota:
+      cpu: 20
+      memory: 80Gi
+    borrowingLimit:
+      cpu: 40
+      memory: 160Gi

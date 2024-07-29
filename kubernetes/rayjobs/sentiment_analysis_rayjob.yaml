@@ -1,0 +1,82 @@
+apiVersion: ray.io/v1
+kind: RayJob
+metadata:
+  name: sentiment-analysis-training
+  namespace: sentiment-analysis
+spec:
+  entrypoint: |
+    python3 -c "from src.data_generation.sentiment_data_generator import generate_sentiment_data; generate_sentiment_data().to_csv('/tmp/sentiment_data.csv', index=False)"
+    python3 scripts/run_sentiment_analysis.py
+  runtimeEnv:
+    pip: ["ray[tune]", "pandas", "scikit-learn", "numpy", "pyyaml", "torch", "transformers"]
+  rayClusterSpec:
+    rayVersion: '2.4.0'
+    headGroupSpec:
+      serviceType: ClusterIP
+      replicas: 1
+      rayStartParams:
+        dashboard-host: '0.0.0.0'
+      template:
+        metadata:
+          labels:
+            kueue.x-k8s.io/queue-name: sentiment-analysis-queue
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: node.kubernetes.io/instance-type
+                    operator: In
+                    values:
+                    - m5.2xlarge
+                  - key: karpenter.sh/capacity-type
+                    operator: In
+                    values:
+                    - on-demand
+                    - spot
+          containers:
+          - name: ray-head
+            image: your-registry/financial-hpc-ml:latest
+            resources:
+              limits:
+                cpu: 8
+                memory: 32Gi
+              requests:
+                cpu: 8
+                memory: 32Gi
+    workerGroupSpecs:
+    - replicas: 2
+      minReplicas: 1
+      maxReplicas: 5
+      groupName: worker-group-1
+      rayStartParams: {}
+      template:
+        metadata:
+          labels:
+            kueue.x-k8s.io/queue-name: sentiment-analysis-queue
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: node.kubernetes.io/instance-type
+                    operator: In
+                    values:
+                    - m5.2xlarge
+                  - key: karpenter.sh/capacity-type
+                    operator: In
+                    values:
+                    - on-demand
+                    - spot
+          containers:
+          - name: ray-worker
+            image: your-registry/financial-hpc-ml:latest
+            resources:
+              limits:
+                cpu: 8
+                memory: 32Gi
+              requests:
+                cpu: 8
+                memory: 32Gi
